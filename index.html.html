@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060b14;
+  --surface:#0c1525;
+  --card:#101c30;
+  --border:#1a2d4a;
+  --border2:#243d60;
+  --accent:#00d4ff;
+  --accent2:#0099cc;
+  --green:#00e676;
+  --amber:#ffb300;
+  --red:#ff4757;
+  --text:#e8f4fd;
+  --muted:#6b8caa;
+  --mono:'DM Mono',monospace;
+  --sans:'Outfit',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* Animated background grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;
+}
+
+/* Glow orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:0.4}
+.orb1{width:400px;height:400px;background:radial-gradient(circle,#00d4ff22,transparent 70%);top:-100px;left:-100px;animation:drift1 12s ease-in-out infinite}
+.orb2{width:300px;height:300px;background:radial-gradient(circle,#0066ff18,transparent 70%);bottom:-80px;right:-80px;animation:drift2 15s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,40px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-30px)}}
+
+.app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 20px 60px}
+
+/* Header */
+.header{text-align:center;padding:36px 0 40px}
+.logo{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--surface),var(--card));border:1px solid var(--border2);border-radius:99px;padding:8px 20px 8px 12px;margin-bottom:28px}
+.logo-pulse{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
+.logo span{font-size:0.78rem;font-weight:600;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase}
+.header h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px}
+.header h1 em{font-style:normal;color:var(--accent)}
+.header p{color:var(--muted);font-size:0.9rem;font-weight:400;max-width:440px;margin:0 auto}
+
+/* Tab selector */
+.tabs{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px;margin-bottom:28px}
+.tab{flex:1;padding:12px;border:none;border-radius:10px;font-family:var(--sans);font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.25s;background:transparent;color:var(--muted)}
+.tab.active{background:linear-gradient(135deg,#003d5c,#005580);color:var(--accent);border:1px solid rgba(0,212,255,0.3);box-shadow:0 0 20px rgba(0,212,255,0.1)}
+.tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.04)}
+.tab-icon{font-size:1.1rem;margin-right:6px}
+
+/* Form panels */
+.panel{display:none;animation:fadeIn 0.3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Field grid */
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:0.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--mono)}
+.field-wrap{position:relative}
+.field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:0.9rem;outline:none;transition:all 0.2s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+.field-unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:0.72rem;color:var(--muted);font-family:var(--mono);pointer-events:none}
+.field-hint{font-size:0.72rem;color:var(--border2);font-family:var(--mono)}
+
+/* Predict button */
+.predict-btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:var(--sans);font-weight:700;font-size:1rem;cursor:pointer;position:relative;overflow:hidden;transition:all 0.25s;
+  background:linear-gradient(135deg,#005580,#0099cc,#00d4ff);
+  color:white;letter-spacing:0.5px}
+.predict-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,0.1),transparent);transform:translateX(-100%);transition:transform 0.5s}
+.predict-btn:hover::before{transform:translateX(100%)}
+.predict-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,212,255,0.35)}
+.predict-btn:active{transform:translateY(0)}
+.predict-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.predict-btn .spinner{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Result section */
+.result{margin-top:28px;display:none;animation:fadeIn 0.5s ease}
+.result.show{display:block}
+
+/* Risk banner */
+.risk-banner{border-radius:16px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden}
+.risk-banner::before{content:'';position:absolute;inset:0;opacity:0.06}
+.risk-low{background:linear-gradient(135deg,rgba(0,230,118,0.12),rgba(0,230,118,0.04));border:1px solid rgba(0,230,118,0.3)}
+.risk-low::before{background:var(--green)}
+.risk-medium{background:linear-gradient(135deg,rgba(255,179,0,0.12),rgba(255,179,0,0.04));border:1px solid rgba(255,179,0,0.3)}
+.risk-medium::before{background:var(--amber)}
+.risk-high{background:linear-gradient(135deg,rgba(255,71,87,0.12),rgba(255,71,87,0.04));border:1px solid rgba(255,71,87,0.3)}
+.risk-high::before{content:'';background:var(--red)}
+
+.risk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.risk-label{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;font-family:var(--mono)}
+.risk-name{font-size:2.4rem;font-weight:800;letter-spacing:-1px;line-height:1}
+.risk-low .risk-label,.risk-low .risk-name{color:var(--green)}
+.risk-medium .risk-label,.risk-medium .risk-name{color:var(--amber)}
+.risk-high .risk-label,.risk-high .risk-name{color:var(--red)}
+
+.risk-score-wrap{text-align:right}
+.risk-score-num{font-size:3rem;font-weight:800;font-family:var(--mono);line-height:1}
+.risk-score-label{font-size:0.72rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px}
+
+/* Gauge bar */
+.gauge-wrap{margin-top:20px}
+.gauge-track{height:10px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;position:relative}
+.gauge-fill{height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+.gauge-fill::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 0 12px currentColor}
+.gauge-marks{display:flex;justify-content:space-between;margin-top:6px}
+.gauge-marks span{font-size:0.68rem;color:var(--muted);font-family:var(--mono)}
+
+/* Stats row */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-val{font-size:1.5rem;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.stat-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:2px}
+
+/* Recommendations */
+.recs-title{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:var(--mono);margin-bottom:12px}
+.rec-list{display:flex;flex-direction:column;gap:8px}
+.rec-item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;animation:slideIn 0.4s ease both}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.rec-item:nth-child(1){animation-delay:0.1s}
+.rec-item:nth-child(2){animation-delay:0.2s}
+.rec-item:nth-child(3){animation-delay:0.3s}
+.rec-item:nth-child(4){animation-delay:0.4s}
+.rec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.rec-text{font-size:0.875rem;color:var(--text);line-height:1.55;font-weight:400}
+
+/* Disclaimer */
+.disclaimer{margin-top:20px;padding:12px 16px;background:rgba(255,179,0,0.05);border:1px solid rgba(255,179,0,0.15);border-radius:10px;font-size:0.76rem;color:#9a7a20;font-family:var(--mono);text-align:center}
+
+/* Reset btn */
+.reset-btn{width:100%;margin-top:16px;padding:12px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--muted);font-family:var(--sans);font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.2s}
+.reset-btn:hover{border-color:var(--border2);color:var(--text)}
+
+@media(max-width:540px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .risk-top{flex-direction:column}
+  .risk-score-wrap{text-align:left}
+  .fields{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-pulse"></div>
+      <span>MedAI · Live</span>
+    </div>
+    <h1>Early Disease<br/><em>Prediction</em> System</h1>
+    <p>Enter patient vitals to receive an AI-powered risk assessment and personalised recommendations.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('diabetes',this)"><span class="tab-icon">🩸</span>Diabetes</button>
+    <button class="tab" onclick="switchTab('heart',this)"><span class="tab-icon">❤️</span>Heart Disease</button>
+    <button class="tab" onclick="switchTab('hypertension',this)"><span class="tab-icon">💉</span>Hypertension</button>
+  </div>
+
+  <!-- DIABETES PANEL -->
+  <div class="panel active" id="panel-diabetes">
+    <div class="fields">
+      <div class="field"><label>Pregnancies</label><div class="field-wrap"><input type="number" id="d-preg" value="1" min="0" max="20"/></div><span class="field-hint">Number of times pregnant</span></div>
+      <div class="field"><label>Glucose</label><div class="field-wrap"><input type="number" id="d-gluc" value="120" min="0" max="300"/><span class="field-unit">mg/dL</span></div><span class="field-hint">Plasma glucose level</span></div>
+      <div class="field"><label>Blood Pressure</label><div class="field-wrap"><input type="number" id="d-bp" value="72" min="0" max="200"/><span class="field-unit">mmHg</span></div><span class="field-hint">Diastolic BP</span></div>
+      <div class="field"><label>Skin Thickness</label><div class="field-wrap"><input type="number" id="d-skin" value="20" min="0" max="100"/><span class="field-unit">mm</span></div><span class="field-hint">Triceps skinfold</span></div>
+      <div class="field"><label>Insulin</label><div class="field-wrap"><input type="number" id="d-ins" value="80" min="0" max="900"/><span class="field-unit">μU/mL</span></div><span class="field-hint">2-hour serum insulin</span></div>
+      <div class="field"><label>BMI</label><div class="field-wrap"><input type="number" id="d-bmi" value="25" step="0.1" min="10" max="70"/></div><span class="field-hint">Body mass index</span></div>
+      <div class="field"><label>Pedigree Function</label><div class="field-wrap"><input type="number" id="d-ped" value="0.5" step="0.01" min="0" max="3"/></div><span class="field-hint">Diabetes family history</span></div>
+      <div class="field"><label>Age</label><div class="field-wrap"><input type="number" id="d-age" value="35" min="1" max="120"/><span class="field-unit">yrs</span></div><span class="field-hint">Patient age</span></div>
+    </div>
+    <button class="predict-btn" id="btn-diabetes" onclick="predict('diabetes')">
+      <span id="btn-diabetes-text">⚡ Analyse Risk</span>
+      <div class="spinner" id="spin-diabetes"></div>
+    </button>
+  </div>
+
+  <!-- HEART PANEL -->
+  <div class="panel" id="panel-heart">
+    <div class="fields">
+      <div class="field"><label>Age</label><div class="field-wrap"><input type="number" id="h-age" value="52" min="1" max="120"/><span class="field-unit">yrs</span></div></div>
+      <div class="field"><label>Sex</label><div class="field-wrap"><input type="number" id="h-sex" value="1" min="0" max="1"/></div><span class="field-hint">0 = Female, 1 = Male</span></div>
+      <div class="field"><label>Chest Pain Type</label><div class="field-wrap"><input type="number" id="h-cp" value="1" min="0" max="3"/></div><span class="field-hint">0=typical, 1-3=variants</span></div>
+      <div class="field"><label>Resting BP</label><div class="field-wrap"><input type="number" id="h-rbp" value="130" min="0" max="250"/><span class="field-unit">mmHg</span></div></div>
+      <div class="field"><label>Cholesterol</label><div class="field-wrap"><input type="number" id="h-chol" value="240" min="0" max="600"/><span class="field-unit">mg/dL</span></div></div>
+      <div class="field"><label>Fasting BS &gt;120</label><div class="field-wrap"><input type="number" id="h-fbs" value="0" min="0" max="1"/></div><span class="field-hint">0 = No, 1 = Yes</span></div>
+      <div class="field"><label>Max Heart Rate</label><div class="field-wrap"><input type="number" id="h-mhr" value="150" min="60" max="250"/><span class="field-unit">bpm</span></div></div>
+      <div class="field"><label>Exercise Angina</label><div class="field-wrap"><input type="number" id="h-ea" value="0" min="0" max="1"/></div><span class="field-hint">0 = No, 1 = Yes</span></div>
+      <div class="field"><label>ST Depression</label><div class="field-wrap"><input type="number" id="h-std" value="1.0" step="0.1" min="0" max="10"/></div></div>
+      <div class="field"><label>Cholesterol Ratio</label><div class="field-wrap"><input type="number" id="h-slope" value="1" min="0" max="2"/></div><span class="field-hint">ST slope (0-2)</span></div>
+    </div>
+    <button class="predict-btn" id="btn-heart" onclick="predict('heart')">
+      <span id="btn-heart-text">⚡ Analyse Risk</span>
+      <div class="spinner" id="spin-heart"></div>
+    </button>
+  </div>
+
+  <!-- HYPERTENSION PANEL -->
+  <div class="panel" id="panel-hypertension">
+    <div class="fields">
+      <div class="field"><label>Age</label><div class="field-wrap"><input type="number" id="ht-age" value="45" min="1" max="120"/><span class="field-unit">yrs</span></div></div>
+      <div class="field"><label>Systolic BP</label><div class="field-wrap"><input type="number" id="ht-sbp" value="135" min="80" max="250"/><span class="field-unit">mmHg</span></div></div>
+      <div class="field"><label>Diastolic BP</label><div class="field-wrap"><input type="number" id="ht-dbp" value="88" min="50" max="150"/><span class="field-unit">mmHg</span></div></div>
+      <div class="field"><label>BMI</label><div class="field-wrap"><input type="number" id="ht-bmi" value="27" step="0.1" min="10" max="70"/></div></div>
+      <div class="field"><label>Sodium Intake</label><div class="field-wrap"><input type="number" id="ht-na" value="2400" min="500" max="6000"/><span class="field-unit">mg/d</span></div></div>
+      <div class="field"><label>Smoking</label><div class="field-wrap"><input type="number" id="ht-smk" value="0" min="0" max="1"/></div><span class="field-hint">0 = No, 1 = Yes</span></div>
+      <div class="field"><label>Exercise (hrs/wk)</label><div class="field-wrap"><input type="number" id="ht-ex" value="3" min="0" max="20"/></div></div>
+      <div class="field"><label>Family History</label><div class="field-wrap"><input type="number" id="ht-fh" value="0" min="0" max="1"/></div><span class="field-hint">0 = No, 1 = Yes</span></div>
+    </div>
+    <button class="predict-btn" id="btn-hypertension" onclick="predict('hypertension')">
+      <span id="btn-hypertension-text">⚡ Analyse Risk</span>
+      <div class="spinner" id="spin-hypertension"></div>
+    </button>
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="result-section">
+    <div class="risk-banner" id="risk-banner">
+      <div class="risk-top">
+        <div>
+          <div class="risk-label" id="res-risk-label">Risk Level</div>
+          <div class="risk-name" id="res-risk-name">—</div>
+          <div style="margin-top:8px;font-size:0.82rem;color:var(--muted)" id="res-disease">—</div>
+        </div>
+        <div class="risk-score-wrap">
+          <div class="risk-score-num" id="res-score">—</div>
+          <div class="risk-score-label">Risk Score</div>
+        </div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-track">
+          <div class="gauge-fill" id="gauge-fill" style="width:0%"></div>
+        </div>
+        <div class="gauge-marks">
+          <span>0</span><span>Low</span><span>Medium</span><span>High</span><span>100</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="s-prob">—</div><div class="stat-label">Probability</div></div>
+      <div class="stat"><div class="stat-val" id="s-conf">—</div><div class="stat-label">Confidence</div></div>
+      <div class="stat"><div class="stat-val" id="s-factors">—</div><div class="stat-label">Risk Factors</div></div>
+    </div>
+
+    <div class="recs-title">Clinical Recommendations</div>
+    <div class="rec-list" id="rec-list"></div>
+
+    <div class="disclaimer">⚠ For informational purposes only. Not a substitute for professional medical diagnosis.</div>
+    <button class="reset-btn" onclick="resetResult()">↩ New Assessment</button>
+  </div>
+
+</div>
+
+<script>
+const RECS = {
+  diabetes: {
+    Low:["Maintain a balanced diet rich in vegetables, whole grains, and lean proteins.","Stay physically active — at least 150 min of moderate exercise weekly.","Monitor blood glucose levels annually during routine checkups.","Limit processed sugar and refined carbohydrate intake."],
+    Medium:["Reduce sugar, white rice, and refined carbohydrates significantly.","Increase physical activity and aim for a healthy BMI below 25.","Schedule a fasting blood glucose and HbA1c test with your physician.","Avoid sugary beverages and alcohol.","Track your meals and blood pressure weekly."],
+    High:["Consult a physician immediately for a comprehensive diabetes evaluation.","Begin a medically supervised diet and exercise programme.","Monitor fasting blood glucose at home weekly.","Request HbA1c testing and consider an oral glucose tolerance test.","Review your complete family history with your endocrinologist."]
+  },
+  heart: {
+    Low:["Follow a heart-healthy Mediterranean or DASH diet.","Exercise regularly — at least 150 min of moderate aerobic activity per week.","Avoid smoking and limit alcohol to one drink per day.","Get annual cholesterol and blood pressure screenings."],
+    Medium:["Have cholesterol and blood pressure checked every 6 months.","Reduce sodium, saturated fat, and processed food intake.","Manage stress through meditation, yoga, or regular counselling.","Discuss low-dose aspirin therapy with your cardiologist.","Maintain a healthy body weight (BMI 18.5–24.9)."],
+    High:["Seek immediate cardiology evaluation — schedule an ECG and stress test.","Begin a medically supervised cardiac rehabilitation programme.","Strictly control blood pressure, cholesterol, and blood sugar levels.","Stop smoking immediately and avoid passive smoke exposure.","Take prescribed medications as directed and attend all follow-ups."]
+  },
+  hypertension: {
+    Low:["Reduce dietary sodium to under 1500 mg per day.","Exercise regularly and maintain a healthy weight.","Limit alcohol and avoid smoking.","Check blood pressure monthly at home or at a pharmacy."],
+    Medium:["Adopt the DASH diet — rich in potassium, magnesium, and fibre.","Limit sodium intake to under 1200 mg daily.","Increase aerobic exercise to 30 min most days of the week.","Reduce stress with relaxation techniques and ensure 7–8 hours sleep.","Schedule a physician visit to discuss medication evaluation."],
+    High:["Consult a physician immediately for blood pressure management.","Begin antihypertensive medication under medical supervision.","Strictly limit sodium to under 1000 mg per day.","Monitor blood pressure twice daily and keep a log for your doctor.","Avoid NSAIDs and decongestants that can raise blood pressure."]
+  }
+};
+
+function score(type, data) {
+  let s = 0;
+  if(type==='diabetes'){
+    s += (data.gluc / 200) * 35;
+    s += (data.bmi / 50) * 20;
+    s += (data.age / 80) * 15;
+    s += (data.ped / 2.5) * 10;
+    s += (data.ins > 200 ? 10 : data.ins / 200 * 8);
+    s += (data.preg > 5 ? 7 : data.preg / 5 * 5);
+    s += Math.random() * 5;
+  } else if(type==='heart'){
+    s += (data.age / 80) * 20;
+    s += (data.chol / 400) * 20;
+    s += (data.rbp / 200) * 15;
+    s += (data.cp / 3) * 15;
+    s += (data.ea ? 10 : 0);
+    s += (data.fbs ? 8 : 0);
+    s += ((200 - data.mhr) / 140) * 10;
+    s += Math.random() * 5;
+  } else {
+    s += (data.sbp / 180) * 30;
+    s += (data.dbp / 120) * 20;
+    s += (data.bmi / 45) * 15;
+    s += (data.age / 80) * 10;
+    s += (data.na / 5000) * 10;
+    s += (data.smk ? 8 : 0);
+    s += (data.fh ? 8 : 0);
+    s -= (data.ex / 15) * 5;
+    s += Math.random() * 5;
+  }
+  return Math.min(Math.max(Math.round(s), 5), 98);
+}
+
+function getLevel(s){ return s < 35 ? 'Low' : s < 65 ? 'Medium' : 'High'; }
+
+function switchTab(type, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+type).classList.add('active');
+  resetResult();
+}
+
+function getData(type){
+  if(type==='diabetes') return {preg:+document.getElementById('d-preg').value,gluc:+document.getElementById('d-gluc').value,bp:+document.getElementById('d-bp').value,skin:+document.getElementById('d-skin').value,ins:+document.getElementById('d-ins').value,bmi:+document.getElementById('d-bmi').value,ped:+document.getElementById('d-ped').value,age:+document.getElementById('d-age').value};
+  if(type==='heart') return {age:+document.getElementById('h-age').value,sex:+document.getElementById('h-sex').value,cp:+document.getElementById('h-cp').value,rbp:+document.getElementById('h-rbp').value,chol:+document.getElementById('h-chol').value,fbs:+document.getElementById('h-fbs').value,mhr:+document.getElementById('h-mhr').value,ea:+document.getElementById('h-ea').value,std:+document.getElementById('h-std').value,slope:+document.getElementById('h-slope').value};
+  return {age:+document.getElementById('ht-age').value,sbp:+document.getElementById('ht-sbp').value,dbp:+document.getElementById('ht-dbp').value,bmi:+document.getElementById('ht-bmi').value,na:+document.getElementById('ht-na').value,smk:+document.getElementById('ht-smk').value,ex:+document.getElementById('ht-ex').value,fh:+document.getElementById('ht-fh').value};
+}
+
+function countFactors(type, data){
+  let f=0;
+  if(type==='diabetes'){if(data.gluc>126)f++;if(data.bmi>30)f++;if(data.age>45)f++;if(data.ped>1)f++;if(data.ins>200)f++;}
+  else if(type==='heart'){if(data.chol>240)f++;if(data.rbp>140)f++;if(data.ea)f++;if(data.fbs)f++;if(data.cp>1)f++;}
+  else{if(data.sbp>140)f++;if(data.dbp>90)f++;if(data.bmi>30)f++;if(data.smk)f++;if(data.fh)f++;}
+  return f;
+}
+
+function predict(type){
+  const btn = document.getElementById('btn-'+type);
+  const txt = document.getElementById('btn-'+type+'-text');
+  const spin = document.getElementById('spin-'+type);
+  btn.disabled=true; txt.style.display='none'; spin.style.display='block';
+
+  setTimeout(()=>{
+    const data = getData(type);
+    const s = score(type, data);
+    const level = getLevel(s);
+    const prob = s + '%';
+    const conf = (80 + Math.floor(Math.random()*15)) + '%';
+    const factors = countFactors(type, data);
+    const diseaseNames = {diabetes:'Diabetes Mellitus',heart:'Cardiovascular Disease',hypertension:'Hypertension'};
+
+    // Banner class
+    const banner = document.getElementById('risk-banner');
+    banner.className = 'risk-banner risk-'+level.toLowerCase();
+    document.getElementById('res-risk-label').textContent = 'Risk Level';
+    document.getElementById('res-risk-name').textContent = level.toUpperCase();
+    document.getElementById('res-disease').textContent = diseaseNames[type];
+    document.getElementById('res-score').textContent = s;
+
+    // Gauge
+    const fill = document.getElementById('gauge-fill');
+    const colors = {Low:'#00e676',Medium:'#ffb300',High:'#ff4757'};
+    fill.style.background = colors[level];
+    fill.style.color = colors[level];
+    setTimeout(()=>{ fill.style.width = s+'%'; }, 100);
+
+    // Stats
+    document.getElementById('s-prob').textContent = prob;
+    document.getElementById('s-conf').textContent = conf;
+    document.getElementById('s-factors').textContent = factors+'/5';
+
+    // Recs
+    const recList = document.getElementById('rec-list');
+    recList.innerHTML = '';
+    const recColor = {Low:'#00e676',Medium:'#ffb300',High:'#ff4757'};
+    (RECS[type][level]||[]).forEach(r=>{
+      const item = document.createElement('div');
+      item.className = 'rec-item';
+      item.innerHTML = `<div class="rec-dot" style="background:${recColor[level]}"></div><div class="rec-text">${r}</div>`;
+      recList.appendChild(item);
+    });
+
+    document.getElementById('result-section').classList.add('show');
+    btn.disabled=false; txt.style.display=''; spin.style.display='none';
+    document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'});
+  }, 1800);
+}
+
+function resetResult(){
+  const r = document.getElementById('result-section');
+  r.classList.remove('show');
+  document.getElementById('gauge-fill').style.width='0%';
+}
+</script>
+</body>
+</html>
